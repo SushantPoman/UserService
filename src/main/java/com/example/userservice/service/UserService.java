@@ -3,6 +3,7 @@ package com.example.userservice.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,8 +21,11 @@ public class UserService {
 	@Autowired
 	RestTemplate restTemplate;
 	
+	@Value(value = "${orderservice.url}")
+	String orderServiceUrl;
+	
 	public String getGreet() {
-		return restTemplate.getForObject("http://localhost:8090/greet", String.class);
+		return restTemplate.getForObject(orderServiceUrl+"/greet", String.class);
 	}
 	
 	public UserDto getOrders(String username) {
@@ -32,7 +36,7 @@ public class UserService {
 		dto.setContact(user.getContact());
 		dto.setEmail(user.getEmail());
 		
-		List<Orders> orders = restTemplate.getForObject("http://localhost:8090/orderByName/"+username, List.class);
+		List<Orders> orders = restTemplate.getForObject(orderServiceUrl+"/orderByName/"+username, List.class);
 		
 		dto.setOrders(orders);
 		
