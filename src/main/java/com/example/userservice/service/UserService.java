@@ -21,7 +21,7 @@ public class UserService {
 	@Autowired
 	RestTemplate restTemplate;
 	
-	@Value(value = "${orderservice.url}")
+	@Value(value = "${orderservice.addr}")
 	String orderServiceUrl;
 	
 	public String getGreet() {
