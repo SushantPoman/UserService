@@ -2,8 +2,6 @@ package com.example.userservice.controller;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -15,16 +13,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.orderservice.controller.OrderController;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 @RestController
 public class UserController {
-	
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
-
 	
 	@Autowired
 	UserService userService;
@@ -70,12 +67,22 @@ public class UserController {
 
 	}
 	
+	int count =1;
+//	@CircuitBreaker(name = "orderfallback", fallbackMethod = "orderFallbackMethod")
+	@Retry(name = "orderfallback", fallbackMethod = "orderFallbackMethod")
 	@GetMapping("/orderByName/{name}")
 	public ResponseEntity<UserDto> getOrdersByUsername(@PathVariable String name) {
-		log.info("From UserService");
+		System.out.println(" Retrying ... "+count);
+		count++;
 		return new ResponseEntity<UserDto>(userService.getOrders(name), HttpStatus.OK);
-
 	}
+	
+	public ResponseEntity<Object> orderFallbackMethod(String name, Throwable t){
+		System.out.println("Order Fallback");
+		return new ResponseEntity<Object>("<h1>OrderService is not responding, please try again</h1>", HttpStatus.GATEWAY_TIMEOUT);
+	}
+	
+	
 	
 
 }
