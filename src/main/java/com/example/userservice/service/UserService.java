@@ -1,9 +1,14 @@
 package com.example.userservice.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,6 +48,7 @@ public class UserService {
 		return dto;
 	}
 	
+	@Cacheable(value="users")
 	public List<User> getAllUsers(){
 		return (List<User>) userRepository.findAll();
 	}
@@ -55,6 +61,7 @@ public class UserService {
 		return userRepository.save(user);
 	}
 	
+	@Cacheable(value = "user", key = "#username")
 	public User findUserByUsername(String username) {
 		return userRepository.findByUsername(username);
 	}
@@ -69,6 +76,26 @@ public class UserService {
 
 	public String findEmailByUsername(String username) {
 		return userRepository.getEmailByUsername(username);
+	}
+
+	@CachePut(cacheNames = "user", key = "#uid")	
+	public User updateUser(Integer uid, User user) {
+		Optional<User> usr = userRepository.findById(uid);
+		System.out.println("uid"+uid+" "+usr.get().getAddress());
+		if(usr != null) {
+			usr.get().setUsername(user.getUsername());
+			usr.get().setEmail(user.getEmail());
+			usr.get().setContact(user.getContact());
+			usr.get().setAddress(user.getAddress());
+		}
+		userRepository.save(usr.get());
+		return usr.get();
+	}
+	
+	@CacheEvict(cacheNames = "user", key = "#uid", beforeInvocation = true)
+	public String deleteUser(Integer uid) {
+		userRepository.deleteById(uid);
+		return "User deleted successfully";
 	}
 
 }
